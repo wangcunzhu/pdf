@@ -82,26 +82,27 @@ def pyMuPDF_fitz(pdfPath, imagePath):
 
 
 # 图片转PDF
-def pic2pdf2(doc1):
-    Doc = doc1[0:-1]
+def pic2pdf2(imagePath):
+    # Doc = doc1[0:-1]
     doc = fitz.open()
-    for img in sorted(glob.glob(doc1)):
-        imgdoc = fitz.open(img)
-        imgpdf = imgdoc.convertToPDF()
-        imgPDF = fitz.open("pdf", imgpdf)
-        doc.insertPDF(imgPDF)
-    doc.save(Doc + "Image.pdf")
+    for root, dirs, files in os.walk(imagePath):
+        for img in files:
+            imgdoc = fitz.open(os.path.join(root, img))
+            imgpdf = imgdoc.convertToPDF()
+            imgPDF = fitz.open("pdf", imgpdf)
+            doc.insertPDF(imgPDF)
+    doc.save("Image.pdf")
     doc.close()
-    p2 = "\n操作完成，文件以保存在:\n" + Doc + "Image.pdf"
+    p2 = "\n操作完成，文件以保存在:\n"  + "Image.pdf"
     return p2
 
 
 if __name__ == '__main__':
-    pdfPath = '111.pdf'
+    pdfPath = 'new_pdf/110224112《新时代 新国防——大学生国防教育与军事训练》.pdf'
     imagePath = 'temp_file'
     # pyMuPDF_fitz(pdfPath, imagePath)
 
-    # pic2pdf2(imagePath + "/*.png")
+    pic2pdf2(imagePath)
 
     # for root, dirs, files in os.walk(old_pdf):
     #     for name in files:
