@@ -57,10 +57,10 @@ import os
 import datetime
 import glob
 
-def pyMuPDF_fitz(pdfPath, imagePath):
+def pyMuPDF_fitz(pdfname):
     startTime_pdf2img = datetime.datetime.now()  # 开始时间
-
-    print("imagePath=" + imagePath)
+    imagePath = os.path.join(new_pdf, pdfname)
+    pdfPath = os.path.join(new_pdf, pdfname) + ".pdf"
     pdfDoc = fitz.open(pdfPath)
     for pg in range(pdfDoc.pageCount):
         page = pdfDoc[pg]
@@ -82,8 +82,8 @@ def pyMuPDF_fitz(pdfPath, imagePath):
 
 
 # 图片转PDF
-def pic2pdf2(imagePath):
-    # Doc = doc1[0:-1]
+def pic2pdf2(pdfname):
+    imagePath = os.path.join(new_pdf, pdfname)
     doc = fitz.open()
     for root, dirs, files in os.walk(imagePath):
         for img in files:
