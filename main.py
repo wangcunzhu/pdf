@@ -11,6 +11,7 @@ import fitz
 old_pdf = "old_pdf"
 old_img = "old_img"
 new_pdf = "new_pdf"
+imagePath = 'temp_file'
 
 
 def run(path):
@@ -48,7 +49,7 @@ def merge_pdfs(filename):
             pdf_writer.addPage(pdf_reader.getPage(page))
 
     # 写入合并的pdf
-    with open(os.path.join(new_pdf, "".join([filename, ".pdf"])), 'wb') as out:
+    with open(os.path.join(imagePath, "".join([filename, ".pdf"])), 'wb') as out:
         pdf_writer.write(out)
 
 
@@ -59,8 +60,8 @@ import glob
 
 def pyMuPDF_fitz(pdfname):
     startTime_pdf2img = datetime.datetime.now()  # 开始时间
-    imagePath = os.path.join(new_pdf, pdfname)
-    pdfPath = os.path.join(new_pdf, pdfname) + ".pdf"
+    newimagePath = os.path.join(imagePath, pdfname)
+    pdfPath = os.path.join(imagePath, pdfname) + ".pdf"
     pdfDoc = fitz.open(pdfPath)
     for pg in range(pdfDoc.pageCount):
         page = pdfDoc[pg]
@@ -72,42 +73,53 @@ def pyMuPDF_fitz(pdfname):
         mat = fitz.Matrix(zoom_x, zoom_y).preRotate(rotate)
         pix = page.getPixmap(matrix=mat, alpha=False)
 
-        if not os.path.exists(imagePath):  # 判断存放图片的文件夹是否存在
-            os.makedirs(imagePath)  # 若图片文件夹不存在就创建
+        if not os.path.exists(newimagePath):  # 判断存放图片的文件夹是否存在
+            os.makedirs(newimagePath)  # 若图片文件夹不存在就创建
 
-        pix.writePNG(imagePath + '/' + 'images_%s.png' % pg)  # 将图片写入指定的文件夹内
+        pix.writePNG(newimagePath + '/' + 'images_%s.png' % pg)  # 将图片写入指定的文件夹内
 
     endTime_pdf2img = datetime.datetime.now()  # 结束时间
     print('pdf2img时间=', (endTime_pdf2img - startTime_pdf2img).seconds)
-
+    return pdfDoc.pageCount
 
 # 图片转PDF
-def pic2pdf2(pdfname):
-    imagePath = os.path.join(new_pdf, pdfname)
+def pic2pdf2(pdfname, page_num):
+    newimagePath = os.path.join(imagePath, pdfname)
     doc = fitz.open()
-    for root, dirs, files in os.walk(imagePath):
-        for img in files:
-            imgdoc = fitz.open(os.path.join(root, img))
-            imgpdf = imgdoc.convertToPDF()
-            imgPDF = fitz.open("pdf", imgpdf)
-            doc.insertPDF(imgPDF)
-    doc.save("Image.pdf")
+    for page in range(page_num):
+        png_path = os.path.join(newimagePath, f"images_{page}.png")
+        imgdoc = fitz.open(png_path)
+        imgpdf = imgdoc.convertToPDF()
+        imgPDF = fitz.open("pdf", imgpdf)
+        doc.insertPDF(imgPDF)
+    doc.save(f"{new_pdf}/{pdfname}.pdf")
     doc.close()
     p2 = "\n操作完成，文件以保存在:\n"  + "Image.pdf"
-    return p2
+    # for root, dirs, files in os.walk(newimagePath):
+    #     for img in files:
+    #         imgdoc = fitz.open(os.path.join(root, img))
+    #         imgpdf = imgdoc.convertToPDF()
+    #         imgPDF = fitz.open("pdf", imgpdf)
+    #         doc.insertPDF(imgPDF)
+    # doc.save(f"{new_pdf}/{pdfname}.pdf")
+    # doc.close()
+    # p2 = "\n操作完成，文件以保存在:\n"  + "Image.pdf"
+    # return p2
 
 
 if __name__ == '__main__':
-    pdfPath = 'new_pdf/110224112《新时代 新国防——大学生国防教育与军事训练》.pdf'
-    imagePath = 'temp_file'
+    # pdfPath = 'new_pdf/110224112《新时代 新国防——大学生国防教育与军事训练》.pdf'
+
     # pyMuPDF_fitz(pdfPath, imagePath)
 
-    pic2pdf2(imagePath)
+    # pic2pdf2(imagePath)
 
-    # for root, dirs, files in os.walk(old_pdf):
-    #     for name in files:
-    #         filename = os.path.splitext(name)[0]
-    #         merge_pdfs(filename)
+    for root, dirs, files in os.walk(old_pdf):
+        for name in files:
+            filename = os.path.splitext(name)[0]
+            merge_pdfs(filename)
+            page_num = pyMuPDF_fitz(filename)
+            pic2pdf2(filename, page_num)
 
 # if __name__ == '__main__':
 #     pass
