@@ -7,6 +7,12 @@ from reportlab.lib.pagesizes import *
 from PIL import Image
 from PyPDF2 import PdfFileReader, PdfFileWriter
 import fitz
+import yaml
+
+config_file = "config_pdf.yaml"
+
+with open(config_file, 'r', encoding="utf-8") as yamlfile:
+    config_data = yaml.load(yamlfile)
 
 old_pdf = "old_pdf"
 old_img = "old_img"
@@ -21,7 +27,11 @@ def run(path):
 
 
 def convert_to_pdf1(filename):
-    filename_jpg = os.path.join(old_img, "".join([filename, ".jpg"]))
+    filename_img = os.path.join(old_img, "".join([filename, ".jpg"]))
+    if os.path.exists(filename_img):
+        filename_jpg = filename_img
+    else:
+        filename_jpg = os.path.join(old_img, "".join([filename, ".png"]))
     im = Image.open(filename_jpg)
     im_w, im_h = im.size
     x_h, x_w = run(os.path.join(old_pdf, "".join([filename, ".pdf"])))
@@ -68,8 +78,8 @@ def pyMuPDF_fitz(pdfname):
         rotate = int(0)
         # 每个尺寸的缩放系数为1.3，这将为我们生成分辨率提高2.6的图像。
         # 此处若是不做设置，默认图片大小为：792X612, dpi=96
-        zoom_x = 1.33333333  # (1.33333333-->1056x816)   (2-->1584x1224)
-        zoom_y = 1.33333333
+        zoom_x = config_data["zoom"]  # (1.33333333-->1056x816)   (2-->1584x1224)
+        zoom_y = config_data["zoom"]
         mat = fitz.Matrix(zoom_x, zoom_y).preRotate(rotate)
         pix = page.getPixmap(matrix=mat, alpha=False)
 
