@@ -14,10 +14,11 @@ config_file = "config_pdf.yaml"
 with open(config_file, 'r', encoding="utf-8") as yamlfile:
     config_data = yaml.load(yamlfile)
 
-old_pdf = "old_pdf"
-old_img = "old_img"
-new_pdf = "new_pdf"
-imagePath = 'temp_file'
+zoom = config_data["zoom"] #缩放比例
+old_pdf = config_data["old_pdf"]
+old_img = config_data["old_img"]
+new_pdf = config_data["new_pdf"]
+temp_file = config_data['temp_file']
 
 
 def run(path):
@@ -25,24 +26,35 @@ def run(path):
     page_1 = pdf.getPage(0)
     return page_1['/MediaBox'][2], page_1['/MediaBox'][3]
 
+def file_exists(filename):
+    if not os.path.exists(filename):
+        print(f"{filename}不存在，请去检查一下")
 
 def convert_to_pdf1(filename):
-    filename_img = os.path.join(old_img, "".join([filename, ".jpg"]))
-    if os.path.exists(filename_img):
-        filename_jpg = filename_img
+    """
+    图片转换为pdf
+    """
+    filename_jpg = os.path.join(old_img, "".join([filename, ".jpg"]))
+    filename_png = os.path.join(old_img, "".join([filename, ".png"]))
+    if os.path.exists(filename_jpg):
+        filename_img = filename_jpg
+    elif os.path.exists(filename_png):
+        filename_img = filename_png
     else:
-        filename_jpg = os.path.join(old_img, "".join([filename, ".png"]))
-    im = Image.open(filename_jpg)
+        print(f"{filename_jpg}或{filename_png}不存在，请去检查一下")
+        sys.exit(1)
+    im = Image.open(filename_img)
     im_w, im_h = im.size
+    print(f"当前{filename_img}.pdf的长{im_w}宽{im_h}")
     x_h, x_w = run(os.path.join(old_pdf, "".join([filename, ".pdf"])))
-    print(x_h, x_w)
+    print(f"当前{filename}.pdf的长{x_h}宽{x_w}")
     y_h = im_h * x_h / im_w
-    newname = filename_jpg[:filename_jpg.rindex('.')] + '.pdf'
+    newname = filename_img[:filename_img.rindex('.')] + '.pdf'
     c = canvas.Canvas(newname, pagesize=(x_h, x_w))
-    c.drawImage(filename_jpg, 0, int((x_w - y_h) / 2), int(x_h), int(y_h))
+    c.drawImage(filename_img, 0, int((x_w - y_h) / 2), int(x_h), int(y_h))
     c.save()
     c.showPage()
-    print("convert finish")
+    print("图片转换为pdf已完成")
 
 
 def merge_pdfs(filename):
@@ -59,7 +71,7 @@ def merge_pdfs(filename):
             pdf_writer.addPage(pdf_reader.getPage(page))
 
     # 写入合并的pdf
-    with open(os.path.join(imagePath, "".join([filename, ".pdf"])), 'wb') as out:
+    with open(os.path.join(temp_file, "".join([filename, ".pdf"])), 'wb') as out:
         pdf_writer.write(out)
 
 
@@ -70,8 +82,8 @@ import glob
 
 def pyMuPDF_fitz(pdfname):
     startTime_pdf2img = datetime.datetime.now()  # 开始时间
-    newimagePath = os.path.join(imagePath, pdfname)
-    pdfPath = os.path.join(imagePath, pdfname) + ".pdf"
+    newimagePath = os.path.join(temp_file, pdfname)
+    pdfPath = os.path.join(temp_file, pdfname) + ".pdf"
     pdfDoc = fitz.open(pdfPath)
     for pg in range(pdfDoc.pageCount):
         page = pdfDoc[pg]
@@ -94,7 +106,7 @@ def pyMuPDF_fitz(pdfname):
 
 # 图片转PDF
 def pic2pdf2(pdfname, page_num):
-    newimagePath = os.path.join(imagePath, pdfname)
+    newimagePath = os.path.join(temp_file, pdfname)
     doc = fitz.open()
     for page in range(page_num):
         png_path = os.path.join(newimagePath, f"images_{page}.png")
@@ -104,7 +116,7 @@ def pic2pdf2(pdfname, page_num):
         doc.insertPDF(imgPDF)
     doc.save(f"{new_pdf}/{pdfname}.pdf")
     doc.close()
-    p2 = "\n操作完成，文件以保存在:\n"  + "Image.pdf"
+    print(f"{pdfname}文件已导出成功\n\n")
     # for root, dirs, files in os.walk(newimagePath):
     #     for img in files:
     #         imgdoc = fitz.open(os.path.join(root, img))
@@ -120,9 +132,9 @@ def pic2pdf2(pdfname, page_num):
 if __name__ == '__main__':
     # pdfPath = 'new_pdf/110224112《新时代 新国防——大学生国防教育与军事训练》.pdf'
 
-    # pyMuPDF_fitz(pdfPath, imagePath)
+    # pyMuPDF_fitz(pdfPath, temp_file)
 
-    # pic2pdf2(imagePath)
+    # pic2pdf2(temp_file)
 
     for root, dirs, files in os.walk(old_pdf):
         for name in files:

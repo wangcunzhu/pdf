@@ -1,2 +1,6 @@
 zoom: 3
  #数越大越清晰
+old_pdf: "old_pdf"
+old_img: "old_img"
+new_pdf: "new_pdf"
+temp_file: "temp_file"
